@@ -13,15 +13,25 @@ string amf3_encode(mixed $value)
 - On error, returns FALSE and issues a warning message
   (the only error case is wrong argument count).
 
-mixed amf3_decode(string $amf3 [, int &$count, bool $assoc = FALSE])
+mixed amf3_decode(string $amf3 [, int &$count [, $map = 0 ]])
 
 - Decodes $amf3 (AMF3 byte-stream) into a PHP value.
 - On success, returns a resulting PHP value.
 - On error, returns NULL and issues a warning message.
 - If $count is provided, the number of bytes actually read from the string
   will be stored in it (the value of -1 indicates an error).
-- If $assoc is set to TRUE, AMF values encoded as objects will be returned as
-  associative arrays instead of class instances.
+- If $map is 0 (class mapping is off), AMF3 objects are returned as plain PHP
+  associative arrays. Otherwise, class mapping is made according to the mode
+  bits set. The following bit combinations can be used in a PHP script:
+    AMF3_MAP
+      Perform class mapping (no autoloading).
+    AMF3_AUTOLOAD
+      Perform class mapping (with autoloading).
+    AMF3_CONSTRUCT
+      Call the default constructor of a decoded object's class.
+
+  WARNING! The class mapping feature should be used with great care since it
+  can potentially lead to a breach in security.
 
 
 Installation
@@ -41,20 +51,23 @@ Add the following line to the corresponding extension section in your php.ini:
 
 extension=amf3.so
 
+To run tests, type:
+
+make test
+
 
 Usage constraints
 -----------------
 
-- NULL, boolean, integer, float (double), string and array values are
-  fully convertible back and forth to their corresponding types.
+- PHP NULL, boolean, integer, float (double), string, array and object values
+  are fully convertible back and forth to their corresponding AMF3 types.
+- AMF3 Date becomes a float value whereas XML, XMLDocument and ByteArray
+  become strings.
 - In a special case, PHP integers are converted into AMF3 doubles according
   to the specification (see the link below).
 - A PHP array is encoded as a sequence (dense array) when it has integer
   keys that start with zero and have no gaps. In all other cases, an array is
-  encoded as an associative array to avoid ambiguity.
-- The AMF3 Object type is converted into an 'stdClass' object with the
-  additional '_class' (class name) and '_data' (externalizable object's data)
-  fields set when applicable.
+  encoded as a plain associative array to avoid ambiguity.
 
 Official Adobe AMF3 specification is available here:
 http://download.macromedia.com/pub/labs/amf/amf3_spec_121207.pdf
